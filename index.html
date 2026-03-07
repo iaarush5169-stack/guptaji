@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <title>Godown Orders</title>
 
 <style>
@@ -40,20 +39,26 @@ background:#e74c3c;
 color:white;
 }
 
-</style>
+.toggle{
+margin:15px;
+background:#2f3640;
+color:white;
+}
 
+</style>
 </head>
 
 <body>
 
 <h1>📦 Incoming Orders</h1>
 
-<button onclick="toggleUnavailable()">Unavailable Orders</button>
+<button class="toggle" onclick="toggleUnavailable()">Unavailable Orders</button>
 
 <div id="orders"></div>
 
-<!-- sound -->
-<audio id="ding" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+<audio id="sound">
+<source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg">
+</audio>
 
 <script type="module">
 
@@ -74,18 +79,16 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 const ordersDiv = document.getElementById("orders");
-const sound = document.getElementById("ding");
 
 let showUnavailable = false;
-let firstLoad = true;
+let lastOrderCount = 0;
 
-window.toggleUnavailable = function(){
+window.toggleUnavailable=function(){
 
-showUnavailable = !showUnavailable;
-
+showUnavailable=!showUnavailable;
 loadOrders();
 
-};
+}
 
 function loadOrders(){
 
@@ -100,10 +103,18 @@ ordersDiv.innerHTML="<p>No orders yet</p>";
 return;
 }
 
+let currentCount=snapshot.size;
+
+if(currentCount>lastOrderCount){
+document.getElementById("sound").play();
+}
+
+lastOrderCount=currentCount;
+
 snapshot.forEach((child)=>{
 
-let order = child.val();
-let key = child.key;
+let order=child.val();
+let key=child.key;
 
 if(showUnavailable){
 
@@ -120,29 +131,33 @@ let itemsHTML="";
 if(order.items){
 
 order.items.forEach(item=>{
-itemsHTML+=`<li>${item.name} - ${item.weight}</li>`;
+itemsHTML+=`
+<li>
+${item.name} - ${item.weight} - ${item.qty} ${item.unit}
+</li>
+`;
 });
 
 }
 
-let instructionHTML = "";
+let instructionHTML="";
 
-if(order.instructions){
-instructionHTML = `<p><b>Instructions:</b> ${order.instructions}</p>`;
+if(order.instruction){
+instructionHTML=`<p><b>Instruction:</b> ${order.instruction}</p>`;
 }
 
-let buttonsHTML="";
+let buttons="";
 
 if(!showUnavailable){
 
-buttonsHTML = `
+buttons=`
 <button class="accept" onclick="acceptOrder('${key}')">Received</button>
 <button class="reject" onclick="rejectOrder('${key}')">Unavailable</button>
 `;
 
 }
 
-ordersDiv.innerHTML += `
+ordersDiv.innerHTML+=`
 
 <div class="orderBox">
 
@@ -150,23 +165,17 @@ ordersDiv.innerHTML += `
 
 <p>Time: ${order.time}</p>
 
-<ul>${itemsHTML}</ul>
-
 ${instructionHTML}
 
-${buttonsHTML}
+<ul>${itemsHTML}</ul>
+
+${buttons}
 
 </div>
 
 `;
 
 });
-
-if(!firstLoad){
-sound.play();
-}
-
-firstLoad=false;
 
 });
 
@@ -190,8 +199,8 @@ status:"unavailable"
 
 }
 
-window.acceptOrder = acceptOrder;
-window.rejectOrder = rejectOrder;
+window.acceptOrder=acceptOrder;
+window.rejectOrder=rejectOrder;
 
 </script>
 
