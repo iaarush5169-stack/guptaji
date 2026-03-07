@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Godown Orders</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f5f6fa;
+text-align:center;
+}
+
+.orderBox{
+background:white;
+width:500px;
+margin:20px auto;
+padding:20px;
+border-radius:10px;
+box-shadow:0 5px 10px rgba(0,0,0,0.1);
+text-align:left;
+}
+
+button{
+padding:10px 15px;
+border:none;
+margin-top:10px;
+border-radius:5px;
+cursor:pointer;
+}
+
+.accept{
+background:#27ae60;
+color:white;
+}
+
+.reject{
+background:#e74c3c;
+color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>📦 Incoming Orders</h1>
+<button onclick="toggleUnavailable()">Unavailable Orders</button>
+
+<div id="orders"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyCpXTRI-jctSFoWgZh3WT_1DsnvMPSjo4o",
+authDomain: "gupta-traders-a8cd5.firebaseapp.com",
+databaseURL: "https://gupta-traders-a8cd5-default-rtdb.firebaseio.com",
+projectId: "gupta-traders-a8cd5",
+storageBucket: "gupta-traders-a8cd5.firebasestorage.app",
+messagingSenderId: "438114133932",
+appId: "1:438114133932:web:ed5ba17cc97bf00909bc09"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const ordersDiv = document.getElementById("orders");
+
+let showUnavailable = false;
+
+window.toggleUnavailable = function(){
+
+showUnavailable = !showUnavailable;
+
+loadOrders();
+
+};
+
+function loadOrders(){
+
+const ordersRef = ref(db,"orders");
+
+onValue(ordersRef,(snapshot)=>{
+
+ordersDiv.innerHTML="";
+
+if(!snapshot.exists()){
+ordersDiv.innerHTML="<p>No orders yet</p>";
+return;
+}
+
+snapshot.forEach((child)=>{
+
+let order=child.val();
+let key=child.key;
+
+if(showUnavailable){
+
+if(order.status!="unavailable") return;
+
+}else{
+
+if(order.status=="received" || order.status=="unavailable") return;
+
+}
+
+let itemsHTML="";
+
+if(order.items){
+
+order.items.forEach(item=>{
+itemsHTML+=`<li>${item.name} - ${item.weight}</li>`;
+});
+
+}
+
+ordersDiv.innerHTML+=`
+<div class="orderBox">
+
+<h3>Customer: ${order.customer}</h3>
+
+<p>Time: ${order.time}</p>
+
+<ul>${itemsHTML}</ul>
+
+<button class="accept" onclick="acceptOrder('${key}')">Received</button>
+
+<button class="reject" onclick="rejectOrder('${key}')">Unavailable</button>
+
+</div>
+`;
+
+});
+
+});
+
+}
+
+loadOrders();
+
+function acceptOrder(id){
+
+update(ref(db,"orders/"+id),{
+status:"received"
+});
+
+}
+
+function rejectOrder(id){
+
+update(ref(db,"orders/"+id),{
+status:"unavailable"
+});
+
+}
+
+window.acceptOrder = acceptOrder;
+window.rejectOrder = rejectOrder;
+
+</script>
+</body>
+</html>
