@@ -131,7 +131,10 @@ if(order.items){
 order.items.forEach(item=>{
 itemsHTML+=`
 <li>
-${item.name} - ${item.weight} - ${item.qty} ${item.unit}
+${item.name}
+${item.color ? " - Color: "+item.color : ""}
+${item.type ? " - Type: "+item.type : ""}
+ - ${item.weight} - ${item.qty} ${item.unit}
 </li>
 `;
 });
@@ -204,4 +207,5 @@ window.rejectOrder=rejectOrder;
 
 </body>
 </html>
+
 
